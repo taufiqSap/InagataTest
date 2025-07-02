@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\ArticleResource;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Requests\StoreArticleRequest;
+use Illuminate\Validation\Rule;
 
 class ArticleController extends Controller
 {
@@ -31,25 +32,42 @@ class ArticleController extends Controller
      */
     public function store(StoreArticleRequest $request)
     {
-        $validated = $request->validate([
-            'title' => 'required|string|max:100',
-            'content' => 'required|string|max:500',
-            'author' => 'required|string|max:100',
-            'categories_id' => 'required|exists:categories,id'
+        $status = false;
+        $message = '';
+
+        //validasi
+        $validator = Validator::make($request->all(),[
+            'title' => 'required|max:100|unique:article',
+            'content' => 'required|max:500',
+            'author' => 'required|max:100',
+            'categories_id' => 'required'
         ]);
 
-        $article = Article::create([
-             'title' => $validated['title'],
-             'content' => $validated['content'],
-             'author' => $validated['author'],
-             'categories_id' => $validated['categories_id']
+        //creating
+        if($validator->fails()){
+            $status = false;
+            $message = $validator->errors();
+        } else {
+            $status = true;
+            $message = 'data berhsail ditambah';
 
-        ]);
+            $article = new Article();
+            $article->title = $request->title;
+            $article->content = $request->content;
+            $article->author = $request->author;
+            $article->categories_id = $request->categories_id;
+
+            $article->save();
+        }
+        // send respon
         return response()->json([
-            'succes' => true,
-            'message' => 'Berhasil ditambahkan',
-            'data' => $article
-        ]);
+            'status' => $status,
+            'message' => $message,
+            'data' => new ArticleResource($article)
+        ],201);
+
+
+
     }
 
     /**
@@ -58,10 +76,17 @@ class ArticleController extends Controller
      * @param  \App\Models\Article  $article
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
-    {
-        return Article::findOrFail($id);
+   public function show($id)
+{
+    $article = Article::find($id);
+    if (!$article) {
+        return response()->json([
+            'message' => 'Id Artikel tidak ditemukan.'
+        ], 404);
     }
+    return response()->json($article);
+}
+
 
     /**
      * Update the specified resource in storage.
@@ -71,53 +96,39 @@ class ArticleController extends Controller
      * @return \Illuminate\Http\Response
      */
 
-     public function update(Request $request, $id)
-     {
-        $article = Article::find($id);
-        if (!$article) {
-            return response()->json(['message' => 'Article not Found'], 404);
-        }
-
-         $validated = $request->validate([
-            'title' => 'required|string|max:100',
-            'content' => 'required|string|max:500',
-            'author' => 'required|string|max:100',
-            'categories_id' => 'required|exists:categories,id'
-        ]);
-
-        $article = Article::update([
-             'title' => $validated['title'],
-             'content' => $validated['content'],
-             'author' => $validated['author'],
-             'categories_id' => $validated['categories_id']
-
-        ]);
-        return response()->json([
-            'succes' => true,
-            'message' => 'Berhasil ditambahkan',
-            'data' => $article
-        ]);
-     }
-   /* public function update(StoreArticleRequest $request, Article $article)
+    public function update(StoreArticleRequest $request, $id)
     {
-         $validated = $request->validate([
-            'title' => 'required|string|max:100',
-            'content' => 'required|string|max:500',
-        ]);
+         //validasi
+         $validator = Validator::make($request->all(),[
+            'title' => [
+                'required',
+                'max:100',
+                Rule::unique('article')->ignore($id)
+            ],
+            'content' => 'required|max:100',
+            'author' => 'required|max:100',
+            'categories_id' => 'required'
+         ]);
 
-        $article = Article::update([
-             'title' => $validated['title'],
-             'content' => $validated['content'],
-
-        ]);
-
-        return response()->json($article);
-       /* return response()->json([
-            'succes' => true,
-            'message' => 'Berhasil ditambahkan',
-            'data' => $article
-        ]);
-     } */
+        if($validator->fails()){
+            return response()->json([
+                'status' => false,
+                'message' => $validator->errors()
+            ],400);
+        } else{
+            $article = Article::find($id);
+            $article->title = $request->title;
+            $article->content = $request->content;
+            $article->author = $request->author;
+            $article->categories_id = $request->categories_id;
+            $article->save();
+    
+            return response()->json([
+                'status' => true,
+                'message' => 'data artikel berhasil di update'
+            ]);
+        }
+    } 
 
     /**
      * Remove the specified resource from storage.
@@ -128,6 +139,11 @@ class ArticleController extends Controller
     public function destroy($id)
     {
         $article = Article::findOrFail($id);
+        if (!$article) {
+        return response()->json([
+            'message' => 'Id Artikel tidak ditemukan.'
+        ], 404);
+    }   
         $article->delete();
 
         return response()->json([

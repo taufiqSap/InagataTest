@@ -13,13 +13,14 @@ class Article extends Model
     protected $table = 'article';
 
     protected $fillable = [
+    
         'title',
         'content',
         'author',
         'categories_id'
     ];
     
-    public function categories()
+    public function category()
     {
         return $this->belongsTo(Category::class, 'categories_id');
     }
