@@ -3,7 +3,7 @@
 ## Cara Menjalankan Aplikasi
 
 1. **Clone project:**
-Clone project git clone https://github.com/taufiqSap/InagataTest.git cd InagataTest
+git clone https://github.com/taufiqSap/InagataTest.git cd InagataTest
 
 2. **Install Dependencies:**
     composer install
