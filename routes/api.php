@@ -14,6 +14,8 @@ Route::get('/logout',[AuthController::class,'logout']);
 // USER 
 Route::get('/articles', [ArticleController::class, 'index']);
 Route::get('/articles/{id}', [ArticleController::class, 'show']);
+Route::get('/articles/category/{id}', [ArticleController::class, 'searchByCategory']);
+
 
 // ADMIN
 Route::middleware(['auth:api', 'AdminJWT'])->group(function () {

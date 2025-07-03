@@ -21,7 +21,7 @@ class AdminJWT
         return response()->json([
             'status' => false,
             'message' => 'Hanya admin yang bisa edit edit data artikel'
-        ], 403);
+        ], 404);
     }
     return $next($request);
 }

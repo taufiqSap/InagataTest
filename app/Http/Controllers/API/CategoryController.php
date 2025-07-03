@@ -6,6 +6,7 @@ use App\Models\Category;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CategoryResource;
+use Illuminate\Support\Facades\Validator;
 use App\Http\Requests\StoreCategoryRequest;
 
 class CategoryController extends Controller
@@ -29,29 +30,29 @@ class CategoryController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function store(StoreCategoryRequest $request)
-    {
-        $validator = Validator::make($request->all(),[
-            'category_name' => 'required|string|max:100'
-        ]);
+{
+    $validator = Validator::make($request->all(), [
+        'category_name' => 'required|string|max:100'
+    ]);
 
-        if($validator->fails()){
-            $status = false;
-            $message = $validator->errors();
-        } else{
-            $status = true;
-            $message = 'data berhasil ditambah';
-
-            $category = new Category();
-            $category ->category_name = $request->category_name;
-            $category->save();
-        }
+    if ($validator->fails()) {
         return response()->json([
-            'status' => $status,
-            'message' => $message,
-            'data' => new CategoryResource($category)
-        ],201);
-
+            'status' => false,
+            'message' => $validator->errors(),
+        ], 422);
     }
+
+    $category = new Category();
+    $category->category_name = $request->category_name;
+    $category->save();
+
+    return response()->json([
+        'status' => true,
+        'message' => 'Data berhasil ditambah',
+        'data' => new CategoryResource($category)
+    ], 201);
+}
+
 
     /**
      * Display the specified resource.
@@ -98,7 +99,7 @@ class CategoryController extends Controller
 
             return response()->json([
                 'status' => true,
-                'message' => 'data berhasil ditambah'
+                'message' => 'data berhasil diupdate'
             ], 201);
         }
 

@@ -34,41 +34,37 @@ class ArticleController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function store(StoreArticleRequest $request)
-    {
+{
+    // Validasi manual
+    $validator = Validator::make($request->all(), [
+        'title' => 'required|string|max:100|unique:article',
+        'content' => 'required|string|max:500',
+        'author' => 'required|string|max:100',
+        'categories_id' => 'required'
+    ]);
 
-        //validasi
-        $validator = Validator::make($request->all(),[
-            'title' => 'required|string|max:100|unique:article',
-            'content' => 'required|string|max:500',
-            'author' => 'required|string|max:100',
-            'categories_id' => 'required'
-        ]);
-
-        //creating
-        if($validator->fails()){
-            $status = false;
-            $message = $validator->errors();
-        } else {
-            $status = true;
-            $message = 'data berhsail ditambah';
-
-            $article = new Article();
-            $article->title = $request->title;
-            $article->content = $request->content;
-            $article->author = $request->author;
-            $article->categories_id = $request->categories_id;
-
-            $article->save();
-        }
-        // send respon
+    // Jika gagal validasi
+    if ($validator->fails()) {
         return response()->json([
-            'status' => $status,
-            'message' => $message,
-            'data' => new ArticleResource($article)
-        ],201);
-
+            'status' => false,
+            'message' => $validator->errors(),
+        ], 422);
     }
 
+    // Simpan data artikel
+    $article = new Article();
+    $article->title = $request->title;
+    $article->content = $request->content;
+    $article->author = $request->author;
+    $article->categories_id = $request->categories_id;
+    $article->save();
+
+    return response()->json([
+        'status' => true,
+        'message' => 'Data berhasil ditambah',
+        'data' => new ArticleResource($article)
+    ], 201);
+}
     /**
      * Display the specified resource.
      *
@@ -105,7 +101,7 @@ class ArticleController extends Controller
                 'max:100',
                 Rule::unique('article')->ignore($id)
             ],
-            'content' => 'required|string|max:100',
+            'content' => 'required|string|max:500',
             'author' => 'required|string|max:100',
             'categories_id' => 'required'
          ]);
@@ -125,7 +121,8 @@ class ArticleController extends Controller
     
             return response()->json([
                 'status' => true,
-                'message' => 'data artikel berhasil di update'
+                'message' => 'data artikel berhasil di update',
+                'data' => new ArticleResource($article)
             ], 200);
         }
     } 
@@ -158,4 +155,18 @@ class ArticleController extends Controller
           //  'message' => 'berhasil menghapus'
       //  ]);
     }
+   public function searchByCategory($id)
+{
+    $articles = Article::where('categories_id', $id)->with('category')->get();
+
+    if ($articles->isEmpty()) {
+        return response()->json([
+            'message' => 'Tidak ada artikel dalam kategori ini.'
+        ], 404);
+    }
+
+    return response()->json($articles);
+}
+
+
 }
