@@ -30,19 +30,27 @@ class CategoryController extends Controller
      */
     public function store(StoreCategoryRequest $request)
     {
-        $validated = $request->validate([
+        $validator = Validator::make($request->all(),[
             'category_name' => 'required|string|max:100'
         ]);
 
-        $category = Category::create([
-            'category_name' => $validated['category_name']
-        ]);
+        if($validator->fails()){
+            $status = false;
+            $message = $validator->errors();
+        } else{
+            $status = true;
+            $message = 'data berhasil ditambah';
 
+            $category = new Category();
+            $category ->category_name = $request->category_name;
+            $category->save();
+        }
         return response()->json([
-            'succes' => true,
-            'message' => 'berhasil ditambahkan',
-            'data' => $category
-        ]);
+            'status' => $status,
+            'message' => $message,
+            'data' => new CategoryResource($category)
+        ],201);
+
     }
 
     /**
@@ -51,9 +59,18 @@ class CategoryController extends Controller
      * @param  \App\Models\Category  $category
      * @return \Illuminate\Http\Response
      */
-    public function show(Category $category)
+    public function show($id)
     {
-        //
+        $category = Category::find($id);
+        {
+            if(!$category){
+                return response()->json([
+                    'status' => false,
+                    'message' => 'id tidak ditemukan'
+                ],402);
+            }
+            return response()->json($category);
+        }
     }
 
     /**
@@ -65,7 +82,26 @@ class CategoryController extends Controller
      */
     public function update(Request $request, Category $category)
     {
-        //
+        $validator = Validator($request->all(),[
+            'category_name' => 'required|string|max:100'
+        ]);
+        
+        if($validator->fails()){
+            return response()->json([
+                'status' => false,
+                'message' => $validator->errors()
+            ], 402);
+        }else{
+            $category = Category::find($id);
+            $category->category_name = $request->category_name;
+            $category->save();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'data berhasil ditambah'
+            ], 201);
+        }
+
     }
 
     /**
@@ -74,8 +110,19 @@ class CategoryController extends Controller
      * @param  \App\Models\Category  $category
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Category $category)
+    public function destroy($id)
     {
-        //
+        $category = Category::find($id);
+
+        if(!$category){
+            return response()->json([
+                'message' => 'id tidak ditemukan'
+            ], 404);
+        }
+        $category->delete();
+        return response()->json([
+            'status' => true,
+            'message' => 'data berhasil dihapus'
+        ],200);
     }
 }

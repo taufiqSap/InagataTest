@@ -22,8 +22,6 @@ class ArticleController extends Controller
      */
     public function index()
     {
-        $article = Article::query();
-
 
         $data = Article::paginate(10);
         return ArticleResource::collection($data);
@@ -40,9 +38,9 @@ class ArticleController extends Controller
 
         //validasi
         $validator = Validator::make($request->all(),[
-            'title' => 'required|max:100|unique:article',
-            'content' => 'required|max:500',
-            'author' => 'required|max:100',
+            'title' => 'required|string|max:100|unique:article',
+            'content' => 'required|string|max:500',
+            'author' => 'required|string|max:100',
             'categories_id' => 'required'
         ]);
 
@@ -68,8 +66,6 @@ class ArticleController extends Controller
             'message' => $message,
             'data' => new ArticleResource($article)
         ],201);
-
-
 
     }
 
@@ -109,8 +105,8 @@ class ArticleController extends Controller
                 'max:100',
                 Rule::unique('article')->ignore($id)
             ],
-            'content' => 'required|max:100',
-            'author' => 'required|max:100',
+            'content' => 'required|string|max:100',
+            'author' => 'required|string|max:100',
             'categories_id' => 'required'
          ]);
 
@@ -118,7 +114,7 @@ class ArticleController extends Controller
             return response()->json([
                 'status' => false,
                 'message' => $validator->errors()
-            ],400);
+            ],422);
         } else{
             $article = Article::find($id);
             $article->title = $request->title;
