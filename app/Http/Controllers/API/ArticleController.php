@@ -10,6 +10,8 @@ use App\Http\Resources\ArticleResource;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Requests\StoreArticleRequest;
 use Illuminate\Validation\Rule;
+use App\Http\Middleware\Admin;
+use Illuminate\Support\Facades\Auth;
 
 class ArticleController extends Controller
 {
@@ -20,6 +22,9 @@ class ArticleController extends Controller
      */
     public function index()
     {
+        $article = Article::query();
+
+
         $data = Article::paginate(10);
         return ArticleResource::collection($data);
     }
@@ -32,8 +37,6 @@ class ArticleController extends Controller
      */
     public function store(StoreArticleRequest $request)
     {
-        $status = false;
-        $message = '';
 
         //validasi
         $validator = Validator::make($request->all(),[
@@ -98,6 +101,7 @@ class ArticleController extends Controller
 
     public function update(StoreArticleRequest $request, $id)
     {
+    
          //validasi
          $validator = Validator::make($request->all(),[
             'title' => [
@@ -126,7 +130,7 @@ class ArticleController extends Controller
             return response()->json([
                 'status' => true,
                 'message' => 'data artikel berhasil di update'
-            ]);
+            ], 200);
         }
     } 
 
@@ -138,18 +142,18 @@ class ArticleController extends Controller
      */
     public function destroy($id)
     {
-        $article = Article::findOrFail($id);
+        $article = Article::find($id);
+
         if (!$article) {
         return response()->json([
             'message' => 'Id Artikel tidak ditemukan.'
         ], 404);
     }   
         $article->delete();
-
         return response()->json([
             'succes' => true,
             'message' => 'Data berhasil dihapus'
-        ]);
+        ], 200);
 
        // $article->delete();
 
